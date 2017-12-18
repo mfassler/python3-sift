@@ -25,8 +25,7 @@ def read_sift_file(filename):
     assert major_version == 4 or major_version == 5
     assert minor_version == 0
 
-    assert data[-4] == 255
-    assert data[-3:] == b'EOF'
+    assert data[-4:] == b'\xffEOF'
 
     npoints, int5, int128 = struct.unpack('III', data[8:20])
 
@@ -61,8 +60,7 @@ def read_sift_file(filename):
 
 
 if __name__ == '__main__':
-    fname = '/home/fassler/3dRecon/bikeModel/DJI_0083.sift'
-    # fname = '/home/fassler/3dRecon/baslerSimpleGrab/image_0381.sift'
+    fname = sys.argv[1]
     locations, descriptors = read_sift_file(fname)
 
 
