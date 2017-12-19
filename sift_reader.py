@@ -44,7 +44,7 @@ def read_sift_file(filename):
     for i in range(npoints):
         iStart = HEADER_SIZE + i * 4 * 5
         iStop = iStart + 4 * 5
-        loc = struct.unpack('ff4cff', data[iStart:iStop])
+        loc = struct.unpack('ff4Bff', data[iStart:iStop])
 
         locations.append(loc)
 
