@@ -31,7 +31,7 @@ lastGoodDesc = np.array([
 import sift
 
 sift.init()
-sift.RunSIFT('DJI_0085.JPG')
+sift.RunSIFT_on_file('/home/fassler/3dRecon/bikeModel/DJI_0085.JPG')
 
 keys, descriptors = sift.GetFeatureVector()
 
@@ -51,3 +51,27 @@ desc = np.array(stuff[4:132])
 lastLoc = np.array(stuff[-132:-128])
 lastDesc = np.array(stuff[-128:])
 '''
+
+
+from PIL import Image
+im = Image.open('/home/fassler/3dRecon/bikeModel/DJI_0085.JPG')
+
+imBW = im.convert("L")
+sift.RunSIFT(imBW.width, imBW.height, imBW.tobytes())
+
+'''
+raw = im.tobytes()
+numPixels = int(len(raw)/3)
+bw = b''
+
+bwArray = np.empty((numPixels), np.uint8)
+
+for i in range(numPixels):
+    r = raw[i*3]
+    g = raw[i*3+1]
+    b = raw[i*3+2]
+    onePixel = 0.28965*r + 0.60581*g + 0.10454*b
+    bwArray[i] = int(onePixel)
+'''
+
+

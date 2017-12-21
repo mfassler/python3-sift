@@ -4,6 +4,7 @@
 #include <SiftGPU.hpp>
 #include <stdio.h>
 #include <stdlib.h>
+#include <GL/glew.h>
 
 using std::vector;
 
@@ -33,7 +34,7 @@ static PyObject * sift_init(PyObject *self, PyObject *args) {
 }
 
 
-static PyObject * sift_RunSIFT(PyObject *self, PyObject *args) {
+static PyObject * sift_RunSIFT_on_file(PyObject *self, PyObject *args) {
 	int retval;
 	const char *filename;
 
@@ -42,6 +43,38 @@ static PyObject * sift_RunSIFT(PyObject *self, PyObject *args) {
 	}
 
 	retval = _global_sift.RunSIFT(filename);
+	if (!retval) {
+		PyErr_SetString(SiftError, "RunSIFT() failed.");
+		return NULL;
+	}
+
+	return Py_None;
+}
+
+
+static PyObject * sift_RunSIFT(PyObject *self, PyObject *args) {
+	int width;
+	int height;
+	const char *data;
+	int data_len;
+	int retval;
+
+	if (!PyArg_ParseTuple(args, "iiy#", &width, &height, &data, &data_len)) {
+		return NULL;
+	}
+
+	// Internally, the SiftGPU library only works on grayscale images (no alpha).
+	// So I will leave it to Python to provide a simple grayscale.  (The original
+	// sensor data is in YUYV format, so it's trivial to pull the grayscale.)
+
+	if (data_len != (width * height)) {
+		PyErr_SetString(SiftError, "Data length doesn't match image dimensions");
+		return NULL;
+	}
+
+	// defines are in GL/glew.h
+	retval = _global_sift.RunSIFT(width, height, data, GL_LUMINANCE, GL_UNSIGNED_BYTE);
+
 	if (!retval) {
 		PyErr_SetString(SiftError, "RunSIFT() failed.");
 		return NULL;
@@ -126,6 +159,7 @@ static PyObject * sift_GetFeatureVector(PyObject *self, PyObject *args) {
 
 static PyMethodDef SiftMethods[] = {
 	{"init", sift_init, METH_VARARGS, "Create a SiftGPU instance"},
+	{"RunSIFT_on_file", sift_RunSIFT_on_file, METH_VARARGS, "Run the SIFT feature detector"},
 	{"RunSIFT", sift_RunSIFT, METH_VARARGS, "Run the SIFT feature detector"},
 	{"SaveSIFT", sift_SaveSIFT, METH_VARARGS, "Save the SIFT features as an ascii file"},
 	{"GetFeatureVector", sift_GetFeatureVector, METH_VARARGS, "Get the SIFT features as binary vector"},
