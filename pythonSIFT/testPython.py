@@ -56,7 +56,8 @@ lastDesc = np.array(stuff[-128:])
 from PIL import Image
 im = Image.open('/home/fassler/3dRecon/bikeModel/DJI_0085.JPG')
 
-imBW = im.convert("L")
+imBW = im.convert("L", matrix=(0.299, 0.587, 0.114, 0.0))
+
 sift.RunSIFT(imBW.width, imBW.height, imBW.tobytes())
 
 '''
