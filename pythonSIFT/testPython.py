@@ -35,14 +35,12 @@ sift.RunSIFT_on_file('/home/fassler/3dRecon/bikeModel/DJI_0085.JPG')
 
 keys, descriptors = sift.GetFeatureVector()
 
-numKeys = len(keys) / 4.0
-numDescs = len(descriptors) / 128.0
+numKeys = keys.shape[0]
+numDescs = descriptors.shape[0]
 
 assert numKeys == numDescs
 numFeatures = int(numKeys)
 
-keys = np.array(keys).reshape(numFeatures, 4)
-descriptors = np.array(descriptors, np.uint8).reshape(numFeatures, 128)
 
 '''
 loc = np.array(stuff[0:4])
@@ -60,19 +58,21 @@ imBW = im.convert("L", matrix=(0.299, 0.587, 0.114, 0.0))
 
 sift.RunSIFT(imBW.width, imBW.height, imBW.tobytes())
 
-'''
-raw = im.tobytes()
-numPixels = int(len(raw)/3)
-bw = b''
 
-bwArray = np.empty((numPixels), np.uint8)
+keys2, descriptors2 = sift.GetFeatureVector()
 
-for i in range(numPixels):
-    r = raw[i*3]
-    g = raw[i*3+1]
-    b = raw[i*3+2]
-    onePixel = 0.28965*r + 0.60581*g + 0.10454*b
-    bwArray[i] = int(onePixel)
-'''
+
+assert np.all(goodDesc == descriptors[0])
+assert np.all(goodDesc == descriptors2[0])
+assert np.all(lastGoodDesc == descriptors[-1])
+assert np.all(lastGoodDesc == descriptors2[-1])
+
+# Rounding errors, afaict:
+assert (keys - keys2).max() < 0.001
+assert (keys - keys2).min() > -0.001
+
+assert (descriptors - descriptors2).max() == 1
+assert (descriptors - descriptors2).min() == 0
+assert (descriptors - descriptors2).sum() == 1
 
 

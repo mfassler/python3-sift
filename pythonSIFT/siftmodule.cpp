@@ -1,5 +1,6 @@
 
 #include <Python.h>
+#include <numpy/arrayobject.h>
 #include <vector>
 #include <SiftGPU.hpp>
 #include <stdio.h>
@@ -125,35 +126,35 @@ static PyObject * sift_GetFeatureVector(PyObject *self, PyObject *args) {
 	_global_sift.GetFeatureVector(&keys[0], &descriptors[0]);
 
 	// Convert keys and descriptors into something useful we can give back to Python
-	PyObject* py_keyList = PyList_New(numFeatures * 4);
-	if (!py_keyList) {
-		PyErr_SetString(SiftError, "Failed to allocate memory for Python list");
-		return NULL;
-	}
 
-	PyObject* py_descList = PyList_New(numFeatures * 128);
-	if (!py_descList) {
-		PyErr_SetString(SiftError, "Failed to allocate memory for Python list");
-		return NULL;
-	}
+	npy_intp dims[2] = {numFeatures, 4};
+	PyObject *np_keys = PyArray_SimpleNew(2, dims, NPY_FLOAT);
 
+	dims[1] = 128;
+	PyObject *np_descriptors = PyArray_SimpleNew(2, dims, NPY_UINT8);
 
 	for (i = 0; i<numFeatures; ++i) {
-		offset = 4 * i;
-		PyList_SET_ITEM(py_keyList, offset, PyFloat_FromDouble((double) keys[i].x));
-		PyList_SET_ITEM(py_keyList, offset+1, PyFloat_FromDouble((double) keys[i].y));
-		PyList_SET_ITEM(py_keyList, offset+2, PyFloat_FromDouble((double) keys[i].s));
-		PyList_SET_ITEM(py_keyList, offset+3, PyFloat_FromDouble((double) keys[i].o));
 
-		offset = 128 * i;
+		void* itemptr;
+
+		itemptr = PyArray_GETPTR2(np_keys, i, 0);
+		PyArray_SETITEM(np_keys, itemptr, PyFloat_FromDouble((double) keys[i].x));
+		itemptr = PyArray_GETPTR2(np_keys, i, 1);
+		PyArray_SETITEM(np_keys, itemptr, PyFloat_FromDouble((double) keys[i].y));
+		itemptr = PyArray_GETPTR2(np_keys, i, 2);
+		PyArray_SETITEM(np_keys, itemptr, PyFloat_FromDouble((double) keys[i].s));
+		itemptr = PyArray_GETPTR2(np_keys, i, 3);
+		PyArray_SETITEM(np_keys, itemptr, PyFloat_FromDouble((double) keys[i].o));
+
 		for (j=0; j<128; ++j) {
 			value = (double) (descriptors[i*128 + j] * 512.0 + 0.5);
 
-			PyList_SET_ITEM(py_descList, offset+j, PyFloat_FromDouble(value));
+			itemptr = PyArray_GETPTR2(np_descriptors, i, j);
+			PyArray_SETITEM(np_descriptors, itemptr, PyLong_FromDouble(value));
 		}
 	}
 
-	return Py_BuildValue("OO", py_keyList, py_descList);
+	return Py_BuildValue("OO", np_keys, np_descriptors);
 }
 
 
@@ -183,6 +184,8 @@ PyMODINIT_FUNC PyInit_sift(void) {
 	if (m == NULL) {
 		return NULL;
 	}
+
+	import_array();  // TODO:  Is this where this is supposed to go??  It solves a segfault...
 
 	SiftError = PyErr_NewException("sift.error", NULL, NULL);
 	Py_INCREF(SiftError);
