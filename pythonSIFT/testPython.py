@@ -42,14 +42,6 @@ assert numKeys == numDescs
 numFeatures = int(numKeys)
 
 
-'''
-loc = np.array(stuff[0:4])
-desc = np.array(stuff[4:132])
-
-lastLoc = np.array(stuff[-132:-128])
-lastDesc = np.array(stuff[-128:])
-'''
-
 
 from PIL import Image
 im = Image.open('../data/test_eLab_building_01.jpg')
