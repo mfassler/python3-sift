@@ -4,6 +4,7 @@ import sys
 if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
 
+import os
 import struct
 from PIL import Image
 import numpy as np
@@ -47,6 +48,7 @@ for oneFileName in files:
     im = decode_yuyv(Y, U, V, width, height)
     im.save(jpgOutputFileName)
 
+    print(oneFileName)
     sift.RunSIFT(width, height, Y.tobytes())
 
     keys, descriptors = sift.GetFeatureVector()
