@@ -84,6 +84,23 @@ static PyObject * sift_RunSIFT(PyObject *self, PyObject *args) {
 	return Py_None;
 }
 
+PyDoc_STRVAR (
+	RunSIFT__doc__,
+	"RunSIFT(width, height, image_pixel_data) -> None\n"
+	"\n"
+	"Parameters\n"
+	"----------\n"
+	"width : int\n"
+	"height : int\n"
+	"image_pixel_data : bytes\n"
+	"    The image is 8-bit grayscale (unsigned char[] in C)\n"
+	"\n"
+	"Returns\n"
+	"-------\n"
+	"None.  Results are stored in the global sift object.  Use\n"
+	"    sift.GetFeatureVector() or sift.SaveSIFT() to get the results.\n"
+);
+
 
 static PyObject * sift_SaveSIFT(PyObject *self, PyObject *args) {
 	const char *filename;
@@ -101,12 +118,15 @@ static PyObject * sift_SaveSIFT(PyObject *self, PyObject *args) {
 
 static PyObject * sift_GetFeatureVector(PyObject *self, PyObject *args) {
 
-	unsigned int i, j;
-	unsigned int offset;
+	int i, j;
+	int numFeatures;
 
 	double value;
 
-	int numFeatures;
+	if (!PyArg_ParseTuple(args, "")) {
+		return NULL;
+	}
+
 	vector<float> descriptors(1);
 	// reminder:
 	// a SiftKeypoint is:  struct {float x,y,s,o;};
@@ -157,13 +177,31 @@ static PyObject * sift_GetFeatureVector(PyObject *self, PyObject *args) {
 	return Py_BuildValue("OO", np_keys, np_descriptors);
 }
 
+PyDoc_STRVAR (
+	GetFeatureVector__doc__,
+	"GetFeatureFector() -> keys, descriptors\n"
+	"\n"
+	"Parameters\n"
+	"----------\n"
+	"None\n"
+	"\n"
+	"Returns\n"
+	"-------\n"
+	"keys, descriptors : ndarray, ndarray\n"
+	"    keys: 2-D array (floats), shape:  (number_of_features, 4)\n"
+	"    descriptors: 2-D array (uint8), shape:  (number_of_features, 128)\n"
+	"        a key is:  x, y, scale, orientation\n"
+	"        each descriptor is a SIFT descriptor times 512, plus 0.5, cast to uint8\n"
+	"          ie:  desc = int(desc * 512 + 0.5)\n"
+);
+
 
 static PyMethodDef SiftMethods[] = {
 	{"init", sift_init, METH_VARARGS, "Create a SiftGPU instance"},
 	{"RunSIFT_on_file", sift_RunSIFT_on_file, METH_VARARGS, "Run the SIFT feature detector"},
-	{"RunSIFT", sift_RunSIFT, METH_VARARGS, "Run the SIFT feature detector"},
+	{"RunSIFT", sift_RunSIFT, METH_VARARGS, RunSIFT__doc__},
 	{"SaveSIFT", sift_SaveSIFT, METH_VARARGS, "Save the SIFT features as an ascii file"},
-	{"GetFeatureVector", sift_GetFeatureVector, METH_VARARGS, "Get the SIFT features as binary vector"},
+	{"GetFeatureVector", sift_GetFeatureVector, METH_VARARGS, GetFeatureVector__doc__},
 	{NULL, NULL, 0, NULL}
 };
 
