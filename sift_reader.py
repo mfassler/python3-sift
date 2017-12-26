@@ -5,6 +5,8 @@ if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
 
 import struct
+import numpy as np
+
 
 def read_sift_file(filename):
 
@@ -49,12 +51,9 @@ def read_sift_file(filename):
         locations.append(loc)
 
     iDescStart = iStop
+    iDescStop = iDescStart + descriptor_size
 
-    descriptors = []
-    for i in range(npoints):
-        iStart = iDescStart + i * 128
-        iStop = iStart + 128
-        descriptors.append(data[iStart:iStop])
+    descriptors = np.fromstring(data[iDescStart:iDescStop], dtype=np.uint8).reshape((npoints, 128))
 
     return locations, descriptors
 
@@ -62,5 +61,10 @@ def read_sift_file(filename):
 if __name__ == '__main__':
     fname = sys.argv[1]
     locations, descriptors = read_sift_file(fname)
-
+    # This should match the output from the library (except that sort order is random):
+    keys = np.empty((len(locations), 4))
+    for i in range(len(locations)):
+        oneLoc = locations[i]
+        x, y, s, o = oneLoc[0], oneLoc[1], oneLoc[6], oneLoc[7]
+        keys[i] = np.array([x, y, s, o])
 
