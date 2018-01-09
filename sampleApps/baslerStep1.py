@@ -37,6 +37,41 @@ width = 2448
 height = 2048
 
 
+def write_binary_sift_file(filename, image, keys, descriptors):
+    # Sort by scale (2nd colunn of the "keys" array)
+    rowsSortedByScale = keys[:,2].argsort()[::-1]  # descending
+
+    sortedKeys = keys[rowsSortedByScale]
+    sortedDescriptors = descriptors[rowsSortedByScale]
+
+
+    outFile = open(siftOutputFileName, 'wb')
+
+    outFile.write(b'SIFTV4.0')
+    outFile.write(struct.pack('III', sortedKeys.shape[0], 5, 128))
+
+    for oneRow in sortedKeys:
+        x = oneRow[0]
+        y = oneRow[1]
+        #  I get rounding/interpolation errors on the color here compared to VisualSFM:
+        try:
+            r,g,b = image.getpixel((int(round(x)), int(round(y))))
+        except:
+            # the center of the feature might be off-image, so we have no color
+            r,g,b = 0,0,0
+        a = 0  # I assume this is alpha?
+        scale = oneRow[2]
+        orientation = -oneRow[3]  # No clue why VisualSFM puts a minus sign here...
+
+        outFile.write(struct.pack('ffBBBBff', x, y, r, g, b, a, scale, orientation))
+
+    for oneRow in sortedDescriptors:
+        outFile.write(oneRow.tobytes())
+
+    outFile.write(b'\xffEOF')
+    outFile.close()
+
+
 for oneFileName in files:
     data = open(oneFileName, 'rb').read()
     YUYV = np.fromstring(data, dtype=np.uint8)
@@ -52,40 +87,10 @@ for oneFileName in files:
     sift.RunSIFT(width, height, Y.tobytes())
 
     keys, descriptors = sift.GetFeatureVector()
-
-    # Sort by scale (2nd colunn of the "keys" array)
-    rowsSortedByScale = keys[:,2].argsort()[::-1]  # descending
-
-    sortedKeys = keys[rowsSortedByScale]
-    sortedDescriptors = descriptors[rowsSortedByScale]
-
     siftOutputFileName = oneFileName.replace('yuyv_2448x2048', 'sift')
 
-    outFile = open(siftOutputFileName, 'wb')
+    write_binary_sift_file(siftOutputFileName, im, keys, descriptors)
 
-    outFile.write(b'SIFTV4.0')
-    outFile.write(struct.pack('III', sortedKeys.shape[0], 5, 128))
-
-    for oneRow in sortedKeys:
-        x = oneRow[0]
-        y = oneRow[1]
-        #  I get rounding/interpolation errors on the color here compared to VisualSFM:
-        try:
-            r,g,b = im.getpixel((int(round(x)), int(round(y))))
-        except:
-            # the center of the feature might be off-image, so we have no color
-            r,g,b = 0,0,0
-        a = 0  # I assume this is alpha?
-        scale = oneRow[2]
-        orientation = -oneRow[3]  # No clue why VisualSFM puts a minus sign here...
-
-        outFile.write(struct.pack('ffBBBBff', x, y, r, g, b, a, scale, orientation))
-
-    for oneRow in sortedDescriptors:
-        outFile.write(oneRow.tobytes())
-
-    outFile.write(b'\xffEOF')
-    outFile.close()
 
 
 
