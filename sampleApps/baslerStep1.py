@@ -70,7 +70,11 @@ for oneFileName in files:
         x = oneRow[0]
         y = oneRow[1]
         #  I get rounding/interpolation errors on the color here compared to VisualSFM:
-        r,g,b = im.getpixel((int(round(x)), int(round(y))))
+        try:
+            r,g,b = im.getpixel((int(round(x)), int(round(y))))
+        except:
+            # the center of the feature might be off-image, so we have no color
+            r,g,b = 0,0,0
         a = 0  # I assume this is alpha?
         scale = oneRow[2]
         orientation = -oneRow[3]  # No clue why VisualSFM puts a minus sign here...
