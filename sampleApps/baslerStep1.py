@@ -45,7 +45,7 @@ def write_binary_sift_file(filename, image, keys, descriptors):
     sortedDescriptors = descriptors[rowsSortedByScale]
 
 
-    outFile = open(siftOutputFileName, 'wb')
+    outFile = open(filename, 'wb')
 
     outFile.write(b'SIFTV4.0')
     outFile.write(struct.pack('III', sortedKeys.shape[0], 5, 128))
